@@ -33,6 +33,10 @@ spec:
           type: string
         metadata:
           type: object
+          properties:
+            name:
+              maxLength: 32
+              type: string
         spec:
           properties:
             overrides:
