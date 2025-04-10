@@ -1,2 +1,0 @@
-Kube-events has been installed. Check its status by running:
-  kubectl --namespace {{ $.Release.Namespace }} get pods -l "app.kubernetes.io/instance={{ $.Release.Name }}"

@@ -1,4 +1,0 @@
----
-- name: Monitoring | Installing ks-core monitoring
-  shell: >
-    {{ bin_dir }}/kubectl apply -f {{ kubesphere_dir }}/prometheus/kubesphere

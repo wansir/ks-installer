@@ -1,5 +1,0 @@
----
-- import_tasks: kubeedge.yaml
-  when:
-    - edgeruntime.kubeedge is defined
-    - edgeruntime.kubeedge.enabled

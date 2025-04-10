@@ -1,0 +1,678 @@
+## @param global.imageRegistry Global Docker image registry
+## @param global.tag Global Docker image tag
+global:
+  imageRegistry: docker.io
+  tag: v4.1.3
+  imagePullSecrets: []
+  # - name: "image-pull-secret"
+
+
+## @param nameOverride String to partially override common.names.fullname
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override common.names.fullname
+##
+fullnameOverride: ""
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels: {}
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: {}
+
+## Role represents the role of the current cluster,
+## and it can have one of two values: "host" or "member".
+## Priority: specified in values > get from kubesphere-config > default role (host)
+multicluster:
+  role: ""
+  ## Priority: specified in values > get from kubesphere-config > default name (host)
+  hostClusterName: ""
+
+portal:
+  ## The IP address or hostname to access ks-console service.
+  ## DO NOT use IP address if ingress is enabled.
+  hostname: "ks-console.kubesphere-system.svc"
+  http:
+    port: 30880
+#  https:
+#    port: 30443
+
+s3:
+  #  If endpoint is empty, disable s3 storage
+  endpoint: ""
+  region: "us-east-1"
+  disableSSL: true
+  forcePathStyle: true
+  accessKeyID: "admin"
+  secretAccessKey: "admin"
+  bucket: "uploads"
+
+authentication:
+  authenticateRateLimiterMaxTries: 10
+  authenticationRateLimiterDuration: 10m0s
+  loginHistoryRetentionPeriod: 168h
+  enableMultiLogin: true
+  adminPassword: ""
+  issuer:
+    maximumClockSkew: 10s
+    # Jwt Secret is required by ks-apiserver, a random string would be generated if it's empty
+    # Priority: specified in values > get from kubesphere-config > default jwtSecret (a random string)
+    jwtSecret: ""
+    accessTokenMaxAge: 2h
+    accessTokenInactivityTimeout: 30m
+
+experimental:
+  # Strict fails the request on unknown/duplicate fields
+  # Ignore ignores unknown/duplicate fields
+  # Warn responds with a warning, but successfully serve the request
+  validationDirective: ""
+auditing:
+  enable: false
+  auditLevel: Metadata
+  logOptions:
+    path: /etc/audit/audit.log
+    maxAge: 7
+    maxBackups: 10
+    maxSize: 100
+
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  name: "kubesphere"
+
+tolerations:
+  - key: node-role.kubernetes.io/master
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    effect: NoSchedule
+  - key: CriticalAddonsOnly
+    operator: Exists
+
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: In
+              values:
+                - ""
+
+nodeSelector: {}
+
+## enable tls communication between all components
+internalTLS: false
+
+apiserver:
+  image:
+    registry: ""
+    repository: kubesphere/ks-apiserver
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  ## @param containerPorts [array] List of container ports to enable in the ks-apiserver container
+  ##
+  containerPorts:
+    - protocol: TCP
+      containerPort: 9090
+  # nodePort: 30881
+  ## @param resources.limits The resource limits for the ks-apiserver containers
+  ## @param resources.requests The requested resources for the ks-apiserver containers
+  ##
+  resources:
+    limits:
+      cpu: 1
+      memory: 1024Mi
+    requests:
+      cpu: 20m
+      memory: 100Mi
+  ## @param command Override default container command (useful when using custom images)
+  ##
+  command:
+    - ks-apiserver
+    - --logtostderr=true
+  ## @param extraEnvVars Array with extra environment variables to add to ks-apiserver
+  ## e.g.:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param extraVolumeMounts Optionally specify an extra list of additional volumeMounts for the ks-apiserver container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param extraVolumes Optionally specify an extra list of additional volumes for the ks-apiserver pod(s)
+  ##
+  extraVolumes: []
+
+  ## Whether the ks-apiserver pods should be forced to run on separate nodes.
+  hardAntiAffinity: false
+
+console:
+  image:
+    registry: ""
+    repository: kubesphere/ks-console
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  config:
+    enableNodeListTerminal: true
+  ## @param containerPorts [array] List of container ports to enable in the ks-console container
+  ##
+  containerPorts: []
+  nodePort: 30880
+  ## @param resources.limits The resource limits for the ks-console containers
+  ## @param resources.requests The requested resources for the ks-console containers
+  ##
+  resources:
+    limits:
+      cpu: 1
+      memory: 1024Mi
+    requests:
+      cpu: 20m
+      memory: 100Mi
+  ## @param command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param extraEnvVars Array with extra environment variables to add to ks-console
+  ##
+  extraEnvVars: []
+  ## @param extraVolumeMounts Optionally specify an extra list of additional volumeMounts for the ks-console container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param extraVolumes Optionally specify an extra list of additional volumes for the ks-console pod(s)
+  ##
+  extraVolumes: []
+
+  ## Whether the ks-console pods should be forced to run on separate nodes.
+  hardAntiAffinity: false
+
+controller:
+  image:
+    registry: ""
+    repository: kubesphere/ks-controller-manager
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+  ## @param containerPorts [array] List of container ports to enable in the ks-controller-manager container
+  ##
+  containerPorts:
+    - containerPort: 8080
+      protocol: TCP
+    - containerPort: 8443
+      protocol: TCP
+  ## @param resources.limits The resource limits for the ks-controller-manager containers
+  ## @param resources.requests The requested resources for the ks-controller-manager containers
+  ##
+  resources:
+    limits:
+      cpu: 1
+      memory: 1000Mi
+    requests:
+      cpu: 30m
+      memory: 50Mi
+  ## @param command Override default container command (useful when using custom images)
+  ##
+  command:
+    - controller-manager
+    - --logtostderr=true
+    - --leader-elect=true
+    - --controllers=*
+  ## @param extraEnvVars Array with extra environment variables to add to ks-controller-manager
+  ##
+  extraEnvVars: []
+  ## @param extraVolumeMounts Optionally specify an extra list of additional volumeMounts for the ks-controller-manager container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param extraVolumes Optionally specify an extra list of additional volumes for the ks-controller-manager pod(s)
+  ##
+  extraVolumes: []
+
+  ## Whether the ks-controller-manager pods should be forced to run on separate nodes.
+  hardAntiAffinity: false
+
+agent:
+  replicaCount: 1
+
+helmExecutor:
+  timeout: 10m
+  historyMax: 2
+  # clean up all finished Jobs after this time, 0s means no to clean up
+  jobTTLAfterFinished: 0s
+  image:
+    registry: ""
+    repository: kubesphere/kubectl
+    tag: "v1.27.16"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 500m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi
+  affinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app: ks-controller-manager
+            topologyKey: "kubernetes.io/hostname"
+            namespaces:
+              - kubesphere-system
+
+composedApp:
+  # Selector to filter k8s applications to reconcile
+  appSelector: ""
+
+kubectl:
+  image:
+    registry: ""
+    repository: kubesphere/kubectl
+    tag: "v1.27.16"
+    pullPolicy: IfNotPresent
+
+ingress:
+  # If set to false, ingress will not be created
+  # Defaults to true
+  # options: true, false
+  enabled: false
+
+  # options: traefik, nginx
+  ingressClassName: ""
+  # backend port number
+  tls:
+    enabled: true
+    # options: generation, importation, letsEncrypt
+    source: generation
+    secretName: kubesphere-tls-certs
+
+letsEncrypt:
+  # email: none@example.com
+  environment: production
+
+certmanager:
+  duration: 2160h
+  renewBefore: 360h
+
+nodeShell:
+  image:
+    registry: ""
+    repository: kubesphere/kubectl
+    tag: "v1.27.16"
+    pullPolicy: IfNotPresent
+
+# Telemetry collects aggregated information about the versions of KubeSphere, Kubernetes, and the extensions used.
+# KubeSphere Cloud uses this information to help improve the product and does not share it with third-parties.
+# If you prefer not to share this data, you can keep this setting disabled.
+telemetry:
+  enabled: true
+
+extension:
+  imageRegistry: ""
+  nodeSelector: {}
+  ingress:
+    ingressClassName: ""
+    # The domain name suffix used to create the ingress of each extension.
+    # Depending on your ingress address, it can be an LB hostname address (xx.com), {node_ip}.nip.io or an internal DNS address (ks.local).
+    domainSuffix: ""
+    httpPort: 80
+    httpsPort: 443
+
+ha:
+  enabled: false
+#  cache:
+#    type: redis
+#    options:
+#      host: ""
+#      port: 6379
+#      password: ""
+#      db: 0
+
+redis:
+  port: 6379
+  image:
+    registry: ""
+    repository: kubesphere/redis
+    digest: ""
+    tag: 7.2.4-alpine
+    pullPolicy: IfNotPresent
+  persistentVolume:
+    enabled: true
+    size: 2Gi
+
+redisHA:
+  enabled: false
+  redis:
+    port: 6379
+  image:
+    registry: ""
+    repository: kubesphere/redis
+    tag: 7.2.4-alpine
+    digest: ""
+    pullPolicy: IfNotPresent
+  persistentVolume:
+    enabled: true
+    size: 2Gi
+  tolerations:
+    - key: node-role.kubernetes.io/master
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/control-plane
+      effect: NoSchedule
+    - key: CriticalAddonsOnly
+      operator: Exists
+  hardAntiAffinity: false
+  additionalAffinities:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: In
+                values:
+                  - ""
+  haproxy:
+    servicePort: 6379
+    containerPort: 6379
+    image:
+      registry: ""
+      repository: kubesphere/haproxy
+      tag: 2.9.6-alpine
+      digest: ""
+      pullPolicy: IfNotPresent
+    hardAntiAffinity: false
+    additionalAffinities:
+      nodeAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: In
+                  values:
+                    - ""
+
+ksCRDs:
+  kubectl:
+    image:
+      registry: ""
+      repository: kubesphere/kubectl
+      tag: "v1.27.16"
+      pullPolicy: IfNotPresent
+
+# add museum for all ks-extensions
+ksExtensionRepository:
+  enabled: true
+  image:
+    registry: ""
+    repository: kubesphere/ks-extensions-museum
+    tag: "v1.1.5"
+    pullPolicy: IfNotPresent
+
+
+upgrade:
+  enabled: true
+  image:
+    registry: ""
+    repository: kubesphere/ks-upgrade
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  persistenceVolume:
+    name: ks-upgrade
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+    size: 5Gi
+  config:
+    storage:
+      local:
+        path: /tmp/ks-upgrade
+    validator:
+      ksVersion:
+        enabled: true
+      extensionsMuseum:
+        enabled: true
+        namespace: kubesphere-system
+        name: extensions-museum
+        syncInterval: 0
+        watchTimeout: 30m
+    jobs:
+      network:
+        enabled: true
+        priority: 100
+        extensionRef:
+          name: "network"
+          version: "1.1.0"
+        dynamicOptions: {
+          "rerun": "false"
+        }
+      gateway:
+        enabled: true
+        priority: 90
+        extensionRef:
+          name: "gateway"
+          version: "1.0.5"
+      devops:
+        enabled: true
+        priority: 800
+        extensionRef:
+          version: "1.1.2"
+          clusterScheduling:
+          config: |
+            agent:
+              jenkins:
+                kubeconfigEnabled: true
+                securityRealm:
+                  openIdConnect:
+                    # The kubesphere-core api used for jenkins OIDC
+                    # If want to access to jenkinsWebUI, the kubesphereCoreApi must be specified and browser-accessible
+                    # Modifying this configuration will take effect only during installation
+                    # If you wish for changes to take effect after installation, you need to update the jenkins-casc-config ConfigMap，copy the securityRealm configuration from jenkins.yaml to jenkins_user.yaml, save, and wait for approximately 70 seconds for the changes to take effect.
+                    kubesphereCoreApi: "http://ks-apiserver:30880"
+                    # The jenkins web URL used for OIDC redirect
+                    # Modifying this configuration will take effect only during installation
+                    # If you wish for changes to take effect after installation, you need to update the devops-jenkins-oauthclient Secret
+                    jenkinsURL: "http://devops-jenkins:30180"
+        dynamicOptions: {}
+      storage-utils:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "storage-utils"
+          version: "1.0.0"
+        dynamicOptions: {
+          "rerun": "false"
+        }
+      tower:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "tower"
+          version: "1.0.0"
+          config: |
+            tower:
+              service:
+                create: false
+      kubefed:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "kubefed"
+          version: "1.0.0"
+      servicemesh:
+        enabled: false
+        priority: 90
+        extensionRef:
+          name: "servicemesh"
+          version: "1.0.0"
+      application:
+        enabled: true
+        priority: 100
+        extensionRef:
+          name: "openpitrix"
+          version: "2.0.1"
+      whizard-monitoring:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "whizard-monitoring"
+          version: "1.1.1"
+        dynamicOptions:
+          rerun: false
+          updateCrds: true
+      whizard-notification:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "whizard-notification"
+          version: "2.5.9"
+          config: |
+            notification-history:
+              enabled: true
+              vectorNamespace: kubesphere-logging-system
+              sinks:
+                opensearch:
+                  # Create opensearch sink or not
+                  enabled: false
+                  # The index to store the logs, will be {{ prefix }}-{{ timestring }}
+                  index:
+                    # The prefix of index, supports template syntax".
+                    prefix: "{{ .cluster }}-notification-history"
+                    # Timestring is parsed from strftime patterns, like %Y.%m.%d. Used to distribute logs into different indexes according to time.
+                    timestring: "%Y.%m.%d"
+                  # Configurations for the opensearch sink, more info for https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
+                  # Usually users needn't change the following OpenSearch sink config, and the default sinks in secret "kubesphere-logging-system/vector-sinks" created by the WhizardTelemetry Data Pipeline extension will be used.
+                  metadata:
+                    api_version: v8
+                    auth:
+                      strategy: basic
+                      user: admin
+                      password: admin
+                    batch:
+                      timeout_secs: 5
+                    buffer:
+                      max_events: 10000
+                    endpoints:
+                      - https://opensearch-cluster-data.kubesphere-logging-system.svc:9200
+                    tls:
+                      verify_certificate: false
+      whizard-alerting:
+        enabled: false
+        priority: 10
+        extensionRef:
+          name: "whizard-alerting"
+          version: "1.0.3"
+        dynamicOptions:
+          rerun: false
+          updateCrds: true
+      whizard-events:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "whizard-events"
+          version: "1.2.0"
+          config: |
+            kube-events-exporter:
+              sinks:
+                opensearch:
+                  # Create opensearch sink or not
+                  enabled: false
+                  # The index to store the logs, will be {{ prefix }}-{{ timestring }}
+                  index:
+                    # The prefix of index, supports template syntax.
+                    prefix: "{{ .cluster }}-events"
+                    # Timestring is parsed from strftime patterns, like %Y.%m.%d. Used to distribute logs into different indexes according to time.
+                    timestring: "%Y.%m.%d"
+                  # Configurations for the opensearch sink, more info for https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
+                  # Usually users needn't change the following OpenSearch sink config, and the default sinks in secret "kubesphere-logging-system/vector-sinks" created by the WhizardTelemetry Data Pipeline extension will be used.
+                  metadata:
+                    api_version: v8
+                    auth:
+                      strategy: basic
+                      user: admin
+                      password: admin
+                    batch:
+                      timeout_secs: 5
+                    buffer:
+                      max_events: 10000
+                    endpoints:
+                      - https://opensearch-cluster-data.kubesphere-logging-system.svc:9200
+                    tls:
+                      verify_certificate: false
+      whizard-logging:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "whizard-logging"
+          version: "1.2.2"
+          config: |
+            vector-logging:        
+              sinks:
+                opensearch:
+                  # Create opensearch sink or not
+                  enabled: false
+                  # The index to store the logs, will be {{ prefix }}-{{ timestring }}
+                  index:
+                    # The prefix of index, supports template syntax.
+                    prefix: "{{ .cluster }}-logs"
+                    # Timestring is parsed from strftime patterns, like %Y.%m.%d. Used to distribute logs into different indexes according to time.
+                    timestring: "%Y.%m.%d"
+                  # Configurations for the opensearch sink, more info for https://vector.dev/docs/reference/configuration/sinks/elasticsearch/
+                  # Usually users needn't change the following OpenSearch sink config, and the default sinks in secret "kubesphere-logging-system/vector-sinks" created by the WhizardTelemetry Data Pipeline extension will be used.
+                  metadata:
+                    api_version: v8
+                    auth:
+                      strategy: basic
+                      user: admin
+                      password: admin
+                    batch:
+                      timeout_secs: 5
+                    buffer:
+                      max_events: 10000
+                    endpoints:
+                      - https://opensearch-cluster-data.kubesphere-logging-system.svc:9200
+                    tls:
+                      verify_certificate: false
+      vector:
+        enabled: false
+        priority: 101
+        extensionRef:
+          name: "vector"
+          version: "1.0.4"
+      opensearch:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "opensearch"
+          version: "2.11.1"
+      whizard-telemetry:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "whizard-telemetry"
+          version: "1.2.2"
+      metrics-server:
+        enabled: false
+        priority: 80
+        extensionRef:
+          name: "metrics-server"
+          version: "0.7.1"
+        dynamicOptions: {
+          "rerun": "false"
+        }
+      kubeedge:
+        enabled: false
+        priority: 100
+        extensionRef:
+          name: "kubeedge"
+          version: "1.13.1"
+        dynamicOptions: {
+          "rerun": "false"
+        }
