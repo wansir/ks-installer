@@ -423,7 +423,7 @@ upgrade:
   image:
     registry: ""
     repository: kubesphere/ks-upgrade
-    tag: "latest"
+    tag: ""
     pullPolicy: IfNotPresent
   persistenceVolume:
     name: ks-upgrade
