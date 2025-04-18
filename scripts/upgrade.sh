@@ -190,12 +190,15 @@ function upgrade_cluster() {
     echo "review your upgrade values.yaml and make sure the extension configs matches the extension you published, you have 10 seconds before upgrade starts."
     sleep 10
 
+
+
     helm upgrade -n kubesphere-system ks-core $chart --debug --wait --timeout 30m \
          --set multicluster.role=$role \
          --set upgrade.image.registry=$IMAGE_REGISTRY,upgrade.image.tag=$KS_UPGRADE_TAG \
          $EXTENSION_REGISTRY_ARG \
          --set kseExtensionRepository.image.tag=$EXTENSION_VERSION \
          --set global.imageRegistry=$IMAGE_REGISTRY,global.tag=$TAG $args \
+         --set upgrade.config.validator.extensionsMuseum.enabled=$([[ "$role" == "host" ]] && echo "true" || echo "false") \
          -f ks-core-values.yaml
 }
 
