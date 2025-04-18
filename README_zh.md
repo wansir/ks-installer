@@ -22,7 +22,7 @@ tar -xzvf v4.1.3.tar.gz
 
 ### 修改升级配置文件
 
-在 host 和所有的 member 集群中调整升级配置文件，文件路径 `scripts/ks-core-values.yaml`，其中 `upgrade` 部分为升级相关的配置项目，你需要在升级之前确认需要升级的组件和配置信息，通过 `upgrade.jobs.config.<name>.enabled` 控制是否需要升级该组件，以下为配置示例：
+在 host 和所有的 member 集群中调整升级配置文件，配置文件路径 `scripts/ks-core-values.yaml`，其中 `upgrade` 部分为升级相关的配置项目，你需要在升级之前确认需要升级的组件和配置信息，通过 `upgrade.jobs.config.<name>.enabled` 控制是否需要升级该组件，以下为配置示例：
 
 ```yaml
 upgrade:
@@ -67,6 +67,8 @@ upgrade:
           name: "gateway"
           version: "1.0.5"
 ```
+
+更多配置说明请参考[扩展组件升级配置说明](https://github.com/kubesphere/ks-upgrade/tree/release-4.1/docs)
 
 ### 集群状态检查
 
