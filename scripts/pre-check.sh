@@ -195,7 +195,7 @@ function helm_version_check() {
   echo
   echo -e "Helm Version Check:"
   echo
-  min_version="v3.9.0"
+  min_version="v3.13.0"
   # get helm version
   helm_version=$(helm version --short)
   version_compare $helm_version $min_version
@@ -210,7 +210,7 @@ function kubesphere_version_check() {
   echo
   echo -e "KubeSphere Version Check:"
   echo
-  min_version="v3.3.0"
+  min_version="v3.4.0"
 
   cluster_configuration=$(kubectl api-resources | grep ClusterConfiguration | wc -l)
   if [ $cluster_configuration -eq 0 ]; then

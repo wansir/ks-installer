@@ -177,12 +177,15 @@ function upgrade_cluster() {
 
     echo "apply CRDs"
     kubectl -n kubesphere-system delete job prepare-upgrade --ignore-not-found
+
     helm template -s templates/prepare-upgrade-job.yaml -n kubesphere-system --release-name \
         --set upgrade.prepare=true,upgrade.image.registry=$IMAGE_REGISTRY,upgrade.image.tag=$KS_UPGRADE_TAG \
         $EXTENSION_REGISTRY_ARG \
         --set global.imageRegistry=$IMAGE_REGISTRY,global.tag=$TAG \
         -f ks-core-values.yaml \
-        $chart --dry-run=server | kubectl -n kubesphere-system apply --wait -f - && kubectl -n kubesphere-system wait --for=condition=complete --timeout=600s job/prepare-upgrade
+        $chart --dry-run=server | kubectl -n kubesphere-system apply --wait -f -
+
+    kubectl -n kubesphere-system wait --for=condition=complete --timeout=600s job/prepare-upgrade
 
     helm show crds  $chart | kubectl apply -f -
 
